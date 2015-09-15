@@ -22,8 +22,8 @@ if ( is_admin() ){ // admin actions
 // Stylesheets
 add_action( 'wp_enqueue_scripts', 'register_wcft_styles' );
 function register_wcft_styles() {
-	wp_register_style( 'woocommerce-teams', plugins_url( 'woocommerce-teams/styles.css' ) );
-	wp_enqueue_style( 'woocommerce-teams' );
+	wp_register_style( 'woocommerce-team-fundraiser', plugins_url( 'woocommerce-team-fundraiser/styles.css' ) );
+	wp_enqueue_style( 'woocommerce-team-fundraiser' );
 }
 
 
