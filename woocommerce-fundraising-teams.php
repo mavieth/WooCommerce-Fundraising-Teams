@@ -1,99 +1,105 @@
 <?php
 /**
- * Plugin Name: WooCommerce Team Fundraiser
+ * Plugin Name: WooCommerce Fundraising Teams
  * Plugin URI: http://themichaelvieth.com
  * Description: Create and manage teams and team fundraising through Woocommerce.
  * Version: 1.0
- * Author: Rob Korobkin
+ * Author: Michael Vieth
  * Author URI: http://themichaelvieth.com
  * License: GPL2
  */
 
+// include 'admin-functions.php';
+
 defined('ABSPATH') or die("No script kiddies please!");
 
+/*************************
+ ******** INSTALL ********
+ *************************/
 
-// admin stuff
-if ( is_admin() ){ // admin actions
-	add_action( 'admin_menu', 'woo_teams_admin_menu' );
-	add_action( 'admin_init', 'register_wtsettings' );
+// Check WooCommerce Dependencies
+if ( ! class_exists( 'WC_CPInstallCheck' ) ) {
+  class WC_CPInstallCheck {
+		static function install() {
+			if ( !in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+				// Deactivate the plugin
+				deactivate_plugins(__FILE__);
+				$error_message = __('This plugin requires <a href="https://wordpress.org/plugins/woocommerce/" target="_blank">WooCommerce</a> plugin to be active! Please click the link above ot download', 'woocommerce');
+				die($error_message);
+			}
+		}
+	}
+}
+register_activation_hook( __FILE__, array('WC_CPInstallCheck', 'install') );
+
+
+
+// Register Admin Styles
+if ( is_admin() ){ 
+	add_action( 'wp_enqueue_scripts', 'register_admin_styles' );
+	add_action( 'admin_menu', 'register_admin_menu' );
+	add_action('admin_menu', 'register_submenu_page');
+
 }
 
+
+
+
+
+/*************************
+ ******** STYLES *********
+ *************************/
 
 // Stylesheets
-add_action( 'wp_enqueue_scripts', 'register_wcft_styles' );
-function register_wcft_styles() {
-	wp_register_style( 'woocommerce-team-fundraiser', plugins_url( 'woocommerce-team-fundraiser/styles.css' ) );
-	wp_enqueue_style( 'woocommerce-team-fundraiser' );
+function register_admin_styles() {
+	wp_register_style( 'woocommerce-fundraising-teams', plugins_url( 'woocommerce-fundraising-teams/styles.css' ) );
+	wp_enqueue_style( 'woocommerce-fundraising-teams' );
 }
 
 
-// create custom admin menu item
-function woo_teams_admin_menu(){
 
-	//create new top-level menu
-	add_submenu_page('woocommerce', 'Woo Team Fundraiser', 'Woo Team Fundraiser', 'administrator', __FILE__, 'woo_fundraising_teams_admin_page');
 
-	//call register settings function
-	add_action( 'admin_init', 'register_wtSettings' );
 
-}
+/*************************
+ ********* MENUS *********
+ *************************/
 
-function woo_fundraising_teams_admin_page(){
-
-	global $wooTeamFundraiserFields;
-
-	foreach($wooTeamFundraiserFields as $f){
-		$pluginState[$f] = esc_attr( get_option($f) );
-	}
+function register_admin_menu() {
 	
+	$page_title	= 'Teams';
+	$menu_title	= 'Teams';
+	$capability	= 'manage_options';
+	$menu_slug	= 'woocommerce-fundraising-teams/woocommerce-fundraising-teams-admin.php';
+	$function	= '';
+	$icon_url	= plugins_url( 'woocommerce-fundraising-teams/img/dash.png' );
+	$position	= 6;
 
-	echo 	'	<style type="text/css">
-					#wooteams-adminform 			{ }
-					#wooteams-adminform td 			{ padding-bottom: 10px; vertical-align: top; padding-right: 10px; }
-					#wooteams-adminform .tInput 	{ width: 300px; }
-					#wooteams-adminform textarea 	{ height: 100px; width: 300px; }
-				</style>
+	add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+}
+
+
+function register_submenu_page() {
 	
-				<form style="padding: 30px;" id="wooteams-adminform" method="post" action="options.php">';
-				
-	settings_fields( 'wooteams-settings-group' );
-	do_settings_sections( 'wooteams-settings-group' );	
-			
-	$checked = ($pluginState['wcft-allowUserSubmittedTeamFundraiser'] == "on") ? "checked" : "";
-	$requireChecked = ($pluginState['wcft-requireTeamSelection'] == "on") ? "checked" : "";
-				
-	echo			'<h2>Woocommerce Team Settings</h2>
-					<table>
-						<tr>
-							<td><label for="allowUserSubmitted">Allow User Submitted TeamFundraiser</label></td>
-							<td><input type="checkbox" name="wcft-allowUserSubmittedTeamFundraiser" id="allowUserSubmitted" ' . $checked  . ' /></td>
-						</tr>
-						<tr>
-							<td><label for="requireTeamSelection">Require Team Selection</label></td>
-							<td><input type="checkbox" name="wcft-requireTeamSelection" 
-								id="requireTeamSelection" ' . $requireChecked  . ' />
-							</td>
-						</tr>
-						<tr>
-							<td><label for="barGraphColor">Bar Graph Color (hex)</label></td>						
-							<td><input type="text" name="wcft-barGraphColor" id="barGraphColor" class="tInput" 
-										value="' . $pluginState['wcft-barGraphColor'] . '"
-										placeholder="#00ff00" /></td>
-						</tr>
-						<tr>
-							<td><label for="barGraphScale">Bar Graph Scale ($/px)</label></td>						
-							<td><input type="text" name="wcft-barGraphScale" id="barGraphScale" class="tInput" 
-										value="' . $pluginState['wcft-barGraphScale'] . '"
-										placeholder="10"/></td>
-						</tr>
-						<tr>
-							<td><label for="teamList">TeamFundraiser (team 1, team 2 etc.)</label></td>
-							<td><textarea name="wcft-teamList" id="teamList">' . 
-									$pluginState['wcft-teamList'] . 
-								'</textarea></td>
-						</tr>
-					</table>';
-					submit_button();
-	echo 		'</form>';
+	$parent_slug = 'woocommerce-fundraising-teams/woocommerce-fundraising-teams-admin.php';
+	$page_title = 'All Teams';
+	$menu_title = 'All Teams';
+	$capability = 'manage_options';
+	$menu 		= 'my-custom-submenu-page';
+	$function 	= 'submenu_page_func';
+
+	add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function );
+}
+
+function submenu_page_func() {
+	
+	echo '<div class="wrap"><div id="icon-tools" class="icon32"></div>';
+		echo '<h2>My Custom Submenu Page</h2>';
+	echo '</div>';
 
 }
+
+
+
+
+
+

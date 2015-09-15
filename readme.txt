@@ -1,4 +1,4 @@
-=== WooCommerce Team Fundraising ===
+=== WooCommerce Fundraising Teams ===
 Tags: crowdfunding, WooCommerce, teams, free, fundraising, competition, non-profit, 
 Requires at least: 4.0
 Tested up to: 4.3.1
